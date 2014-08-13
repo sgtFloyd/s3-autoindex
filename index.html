@@ -1,11 +1,43 @@
 <html>
 <head>
+  <title>Index of /books</title>
+  <link rel="shortcut icon" href="favicon.ico">
+  <style>
+    body { font-family: "Courier New", Courier, monospace; }
+    table, #loading { margin: 20px; }
+    thead { font-weight: bold; }
+    thead a { color: black; text-decoration: none; }
+    td { padding-right: 40px; }
+    .sortable.active[data-dir="asc"] {
+      padding-right: 20px;
+      background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAABGdBTUEAALGPC/xhBQAAAB5QTFRFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtyhvagAAAAl0Uk5Tv99vII9A7xAAAQgz1QAAADRJREFUCNdj6IACBvyM1ggoo1ECytCcBGG0Z06rADNaZs70ADMsZ86cDGZwzpw5gaDJqAwAmHlCR2Jd8vgAAAAASUVORK5CYII=') no-repeat right;
+    }
+    .sortable.active[data-dir="desc"] {
+      padding-right: 20px;
+      background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQBAMAAADt3eJSAAAABGdBTUEAALGPC/xhBQAAAB5QTFRFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAtyhvagAAAAl0Uk5TD78/j+8fb98A9ROhxwAAADNJREFUCNdj6IACBuIYkjNnTgQzImfOnApmNM+caQFmNHhO4YAozpwG1dVeAWU0aRBpBQCwuEJHfnZY0QAAAABJRU5ErkJggg==') no-repeat right;
+    }
+  </style>
 </head>
 <body>
-  <div id="listing"></div>
+  <div id="loading">Loading...</div>
+  <table id="items" style="display:none;">
+    <thead><tr>
+      <td><a class="sortable active" href="javascript:" data-field="name" data-dir="asc">
+        Name
+      </a></td>
+      <td><a class="sortable" href="javascript:" data-field="date" data-dir="desc">
+        Last Modified
+      </a></td>
+      <td><a class="sortable" href="javascript:" data-field="size" data-dir="desc">
+        Size
+      </a></td>
+    </tr></thead>
+    <tbody></tbody>
+  </table>
 
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-<script src="http://rgrp.github.io/s3-bucket-listing/list.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+  <script>window.S3_BUCKET_URL='http://example-bucket.s3-eu-west-1.amazonaws.com';</script>
+  <script src="list.js"></script>
 </body>
 </html>
 

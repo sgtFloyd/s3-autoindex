@@ -1,157 +1,110 @@
-if (typeof S3BL_IGNORE_PATH == 'undefined' || S3BL_IGNORE_PATH!=true) {
-  var S3BL_IGNORE_PATH = false;
-}
+$(function($) {
+  var s3RestUrl = (function(){
+    var url = window.S3_BUCKET_URL + '?delimiter=/',
+        pathRegex = /.*[?&]path=([^&]+)(&.*)?$/,
+        match = location.search.match(pathRegex);
+    if (match) {
+      var path = match[1].replace(/\/$/, '') + '/';
+      url += '&prefix=' + path;
+    }
+    return url;
+  }());
 
-jQuery(function($) {
-  var s3_rest_url = createS3QueryUrl();
-  // set loading notice
-  $('#listing').html('<h3>Loading <img src="//assets.okfn.org/images/icons/ajaxload-circle.gif" /></h3>');
-  $.get(s3_rest_url)
-    .done(function(data) {
-      // clear loading notice
-      $('#listing').html('');
-      var xml = $(data);
-      var info = getInfoFromS3Data(xml);
-      renderTable(info);
+  var bytesToString = function(bytes){
+    if (bytes == 0){ return '0 bytes'; }
+    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024))),
+        r = Math.round(bytes / Math.pow(1024, i)*10)/10;
+    return [r, ['bytes', 'KB', 'MB', 'GB', 'TB'][i]].join(' ');
+  }
+
+  var FILE_EXCLUDES = ['index.html', 'list.js', 'robots.txt', 'favicon.ico']
+  function File(path, item){
+    var key = item.find('Key').text();
+    this.name = key.substring(path.length);
+    this.date = new Date(item.find('LastModified').text());
+    this.size = parseInt(item.find('Size').text());
+
+    this.toRow = function(){
+      // Don't render files without a name or those on the exclude list
+      if (!this.name||FILE_EXCLUDES.indexOf(key)>-1){return;}
+      return [
+        '<tr>',
+          '<td><a href="/', key, '">', this.name, '</a></td>',
+          '<td>', this.date.toLocaleString(), '</td>',
+          '<td>', bytesToString(this.size), '</td>',
+        '</tr>'
+      ].join('');
+    }
+  }
+
+  function Directory(item) {
+    var path = item.find('Prefix').text();
+    this.name = path.split('/').slice(-2).join('/');
+    this.href = location.pathname+'?path='+path;
+
+    this.toRow = function(){
+      return [
+        '<tr>',
+          '<td><a href="', this.href, '">', this.name, '</a></td>',
+          '<td></td><td>-</td>',
+        '</tr>'
+      ].join('');
+    }
+  }
+
+  function ParentDirectory(parentPath){
+    this.path = parentPath.replace(/\/$/, '')
+      .split('/').slice(0, -1).concat('').join('/');
+
+    this.toRow = function(){
+      return [
+        '<tr><td colspan=3>',
+          '<a href="?path=', this.path, '">../</a>',
+        '</td></tr>'
+      ].join('');
+    }
+  }
+
+  function FileList(xml) {
+    var xml = $(xml), path = $(xml.find('Prefix')[0]).text(),
+        files = $.map(xml.find('Contents'), function(item){return new File(path, $(item));}),
+        dirs = $.map(xml.find('CommonPrefixes'), function(item){return new Directory($(item));});
+
+    this.render = function(){
+      var output = $('#items tbody'); output.html('').parent().show();
+      if(path){output.append(new ParentDirectory(path).toRow());}
+      $.each(dirs, function(_, dir){output.append(dir.toRow());});
+      $.each(files, function(_, file){output.append(file.toRow());});
+    }
+
+    this.sortBy = function(field, direction){
+      var asc = direction === 'asc';
+      files = files.sort(function(a, b){
+        if(a[field] < b[field]) return asc ? 1 : -1;
+        if(a[field] > b[field]) return asc ? -1 : 1;
+        return 0;
+      });
+    }
+  }
+
+  var fileList;
+  $('.sortable').click(function(e){
+    var $elem = $(this),
+        direction = $elem.attr('data-dir'),
+        field = $elem.attr('data-field');
+    fileList.sortBy(field, direction); fileList.render();
+    $('.sortable').removeClass('active'); $elem.addClass('active');
+    $elem.attr('data-dir', direction === 'asc' ? 'desc' : 'asc');
+  });
+
+  $.get(s3RestUrl)
+    .done(function(xml){
+      $('#loading').hide();
+      fileList = new FileList(xml);
+      fileList.render();
     })
-    .fail(function(error) {
+    .fail(function(err){
       alert('There was an error');
-      console.log(error);
+      console.error(err);
     });
 });
-
-function createS3QueryUrl() {
-  if (typeof BUCKET_URL != 'undefined') {
-    var s3_rest_url = BUCKET_URL;
-  } else {
-    var s3_rest_url = location.protocol + '//' + location.hostname;
-  }
-
-  s3_rest_url += '?delimiter=/';
-
-  // handle pathes / prefixes - 2 options
-  //
-  // 1. Using the pathname
-  // {bucket}/{path} => prefix = {path}
-  // 
-  // 2. Using ?prefix={prefix}
-  //
-  // Why both? Because we want classic directory style listing in normal
-  // buckets but also allow deploying to non-buckets
-  //
-  // Can explicitly disable using path (useful if *not* deploying to an s3
-  // bucket) by setting
-  //
-  // S3BL_IGNORE_PATH = true
-  var rx = /.*[?&]prefix=([^&]+)(&.*)?$/;
-  var prefix = '';
-  if (S3BL_IGNORE_PATH==false) {
-    var prefix = location.pathname.replace(/^\//, '');
-  }
-  var match = location.search.match(rx);
-  if (match) {
-    prefix = match[1];
-  }
-  if (prefix) {
-    // make sure we end in /
-    var prefix = prefix.replace(/\/$/, '') + '/';
-    s3_rest_url += '&prefix=' + prefix;
-  }
-  return s3_rest_url;
-}
-
-function getInfoFromS3Data(xml) {
-  var files = $.map(xml.find('Contents'), function(item) {
-    item = $(item);
-    return {
-      Key: item.find('Key').text(),
-      LastModified: item.find('LastModified').text(),
-      Size: item.find('Size').text(),
-      Type: 'file'
-    }
-  });
-  var directories = $.map(xml.find('CommonPrefixes'), function(item) {
-    item = $(item);
-    return {
-      Key: item.find('Prefix').text(),
-      LastModified: '',
-      Size: '0',
-      Type: 'directory'
-    }
-  });
-  return {
-    files: files,
-    directories: directories,
-    prefix:  $(xml.find('Prefix')[0]).text()
-  }
-}
-
-// info is object like:
-// {
-//    files: ..
-//    directories: ..
-//    prefix: ...
-// } 
-function renderTable(info) {
-  var files = info.files.concat(info.directories)
-    , prefix = info.prefix
-    ;
-  var cols = [ 45, 30, 15 ];
-  var content = [];
-  content.push(padRight('Last Modified', cols[1]) + '  ' + padRight('Size', cols[2]) + 'Key \n');
-  content.push(new Array(cols[0] + cols[1] + cols[2] + 4).join('-') + '\n');
-  
-  // add the ../ at the start of the directory listing
-  if (prefix) {
-    var up = prefix.replace(/\/$/, '').split('/').slice(0, -1).concat('').join('/'), // one directory up
-        item = { 
-          Key: up,
-          LastModified: '',
-          Size: '',
-          keyText: '../',
-          href: S3BL_IGNORE_PATH ? '?prefix=' + up : '../'
-        },
-        row = renderRow(item, cols);
-    content.push(row + '\n');
-  }
-  
-  jQuery.each(files, function(idx, item) {
-    // strip off the prefix
-    item.keyText = item.Key.substring(prefix.length);
-    if (item.Type === 'directory') {
-      if (S3BL_IGNORE_PATH) {
-        item.href = location.protocol + '//' + location.hostname + location.pathname + '?prefix=' + item.Key;
-      } else {
-        item.href = item.keyText;
-      }
-    } else {
-      // TODO: need to fix this up for cases where we are on site not bucket
-      // in that case href for a file should point to s3 bucket
-      item.href = '/' + item.Key;
-    }
-    var row = renderRow(item, cols);
-    content.push(row + '\n');
-  });
-
-  document.getElementById('listing').innerHTML = '<pre>' + content.join('') + '</pre>';
-}
-
-function renderRow(item, cols) {
-  var row = '';
-  row += padRight(item.LastModified, cols[1]) + '  ';
-  row += padRight(item.Size, cols[2]);
-  row += '<a href="' + item.href + '">' + item.keyText + '</a>';
-  return row;
-}
-
-function padRight(padString, length) {
-  var str = padString.slice(0, length-3);
-  if (padString.length > str.length) {
-    str += '...';
-  }
-  while (str.length < length) {
-    str = str + ' ';
-  }
-  return str;
-}
-
