@@ -25,7 +25,7 @@ $(function($) {
     });
   }
 
-  var FILE_EXCLUDES = ['index.html', 'list.js', 'robots.txt', 'favicon.ico']
+  var FILE_EXCLUDES = ['index.html', 'list.js', 'robots.txt', 'favicon.ico'];
   function File(path, item){
     var key = item.find('Key').text();
     this.name = key.substring(path.length);
@@ -37,11 +37,10 @@ $(function($) {
     this.size = parseInt(item.find('Size').text());
 
     this.toRow = function(){
-      // Don't render files without a name or those on the exclude list
       if (!this.name||FILE_EXCLUDES.indexOf(key)>-1){return;}
       return [
         '<tr>',
-          '<td><span class="icon-android-book"></span></td>',
+          '<td><span class="ion-android-book"></span></td>',
           '<td><a href="/', key, '">', this.name, '</a></td>',
           '<td>', this.date.toLocaleString(), '</td>',
           '<td>', this.size.toBytes(), '</td>',
@@ -50,6 +49,7 @@ $(function($) {
     }
   }
 
+  var DIRECTORY_EXCLUDES = ['fonts/'];
   function Directory(item) {
     var path = item.find('Prefix').text();
     this.name = path.split('/').slice(-2).join('/');
@@ -60,9 +60,10 @@ $(function($) {
     this.href = location.pathname+'?path='+path;
 
     this.toRow = function(){
+      if (!this.name||DIRECTORY_EXCLUDES.indexOf(this.name)>-1){return;}
       return [
         '<tr>',
-          '<td><span class="icon-android-folder"></span></td>',
+          '<td><span class="ion-android-folder"></span></td>',
           '<td><a href="', this.href, '">', this.name, '</a></td>',
           '<td></td><td>-</td>',
         '</tr>'
