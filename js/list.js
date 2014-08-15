@@ -40,7 +40,7 @@ $(function($) {
       if (!this.name||FILE_EXCLUDES.indexOf(key)>-1){return;}
       return [
         '<tr>',
-          '<td><span class="ion-android-book"></span></td>',
+          '<td><span class="ion-document-text"></span></td>',
           '<td><a href="/', key, '">', this.name, '</a></td>',
           '<td>', this.date.toLocaleString(), '</td>',
           '<td>', this.size.toBytes(), '</td>',
@@ -63,7 +63,7 @@ $(function($) {
       if (!this.name||DIRECTORY_EXCLUDES.indexOf(this.name)>-1){return;}
       return [
         '<tr>',
-          '<td><span class="ion-android-folder"></span></td>',
+          '<td><span class="ion-ios7-folder"></span></td>',
           '<td><a href="', this.href, '">', this.name, '</a></td>',
           '<td></td><td>-</td>',
         '</tr>'
@@ -77,7 +77,8 @@ $(function($) {
 
     this.toRow = function(){
       return [
-        '<tr><td></td><td colspan=3>',
+        '<tr><td class="ion-arrow-return-left">',
+        '</td><td colspan=3>',
           '<a href="?path=', this.path, '">../</a>',
         '</td></tr>'
       ].join('');
