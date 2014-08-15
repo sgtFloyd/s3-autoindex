@@ -10,17 +10,29 @@ $(function($) {
     return url;
   }());
 
-  var bytesToString = function(bytes){
-    if (bytes == 0){ return '0 bytes'; }
-    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024))),
-        r = Math.round(bytes / Math.pow(1024, i)*10)/10;
+  Number.prototype.toBytes = function(){
+    if (this == 0){ return '0 bytes'; }
+    var i = parseInt(Math.floor(Math.log(this) / Math.log(1024))),
+        r = Math.round(this / Math.pow(1024, i)*10)/10;
     return [r, ['bytes', 'KB', 'MB', 'GB', 'TB'][i]].join(' ');
+  }
+  Array.prototype.sortBy = function(field, direction) {
+    var asc = direction === 'asc';
+    return this.sort(function(a, b){
+      if(a[field] < b[field]) return asc ? 1 : -1;
+      if(a[field] > b[field]) return asc ? -1 : 1;
+      return 0;
+    });
   }
 
   var FILE_EXCLUDES = ['index.html', 'list.js', 'robots.txt', 'favicon.ico']
   function File(path, item){
     var key = item.find('Key').text();
     this.name = key.substring(path.length);
+    this.title = this.name.split('-').slice(0,-1).join('-').trim();
+    if( this.title.match(/^The\s/i) ) {
+      this.title = this.title.replace(/^The\s/i,'')+', The';
+    }
     this.date = new Date(item.find('LastModified').text());
     this.size = parseInt(item.find('Size').text());
 
@@ -31,7 +43,7 @@ $(function($) {
         '<tr>',
           '<td><a href="/', key, '">', this.name, '</a></td>',
           '<td>', this.date.toLocaleString(), '</td>',
-          '<td>', bytesToString(this.size), '</td>',
+          '<td>', this.size.toBytes(), '</td>',
         '</tr>'
       ].join('');
     }
@@ -66,24 +78,17 @@ $(function($) {
   }
 
   function FileList(xml) {
-    var xml = $(xml), path = $(xml.find('Prefix')[0]).text(),
-        files = $.map(xml.find('Contents'), function(item){return new File(path, $(item));}),
-        dirs = $.map(xml.find('CommonPrefixes'), function(item){return new Directory($(item));});
+    var xml = $(xml), path = $(xml.find('Prefix')[0]).text();
+    this.files = $.map(xml.find('Contents'),
+          function(item){return new File(path, $(item));}),
+    this.dirs = $.map(xml.find('CommonPrefixes'),
+          function(item){return new Directory($(item));});
 
     this.render = function(){
       var output = $('#items tbody'); output.html('').parent().show();
       if(path){output.append(new ParentDirectory(path).toRow());}
-      $.each(dirs, function(_, dir){output.append(dir.toRow());});
-      $.each(files, function(_, file){output.append(file.toRow());});
-    }
-
-    this.sortBy = function(field, direction){
-      var asc = direction === 'asc';
-      files = files.sort(function(a, b){
-        if(a[field] < b[field]) return asc ? 1 : -1;
-        if(a[field] > b[field]) return asc ? -1 : 1;
-        return 0;
-      });
+      $.each(this.dirs, function(_,dir){output.append(dir.toRow());});
+      $.each(this.files, function(_,file){output.append(file.toRow());});
     }
   }
 
@@ -92,7 +97,8 @@ $(function($) {
     var $elem = $(this),
         direction = $elem.attr('data-dir'),
         field = $elem.attr('data-field');
-    fileList.sortBy(field, direction); fileList.render();
+    fileList.files = fileList.files.sortBy(field, direction);
+    fileList.render();
     $('.sortable').removeClass('active'); $elem.addClass('active');
     $elem.attr('data-dir', direction === 'asc' ? 'desc' : 'asc');
   });
@@ -101,7 +107,7 @@ $(function($) {
     .done(function(xml){
       $('#loading').hide();
       fileList = new FileList(xml);
-      fileList.render();
+      $('.sortable.active').click();
     })
     .fail(function(err){
       alert('There was an error');
