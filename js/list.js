@@ -25,7 +25,7 @@ $(function($) {
     });
   }
 
-  var FILE_EXCLUDES = ['index.html', 'list.js', 'robots.txt', 'favicon.ico'];
+  var FILE_EXCLUDES = ['index.html', 'robots.txt', 'favicon.ico'];
   function File(path, item){
     var key = item.find('Key').text();
     this.name = key.substring(path.length);
@@ -49,7 +49,7 @@ $(function($) {
     }
   }
 
-  var DIRECTORY_EXCLUDES = ['fonts/'];
+  var DIRECTORY_EXCLUDES = ['fonts/', 'js/'];
   function Directory(item) {
     var path = item.find('Prefix').text();
     this.name = path.split('/').slice(-2).join('/');
