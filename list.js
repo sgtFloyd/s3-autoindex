@@ -11,7 +11,7 @@ $(function($) {
   }());
 
   Number.prototype.toBytes = function(){
-    if (this == 0){ return '0 bytes'; }
+    if (this === 0){ return '0 bytes'; }
     var i = parseInt(Math.floor(Math.log(this) / Math.log(1024))),
         r = Math.round(this / Math.pow(1024, i)*10)/10;
     return [r, ['bytes', 'KB', 'MB', 'GB', 'TB'][i]].join(' ');
@@ -52,6 +52,10 @@ $(function($) {
   function Directory(item) {
     var path = item.find('Prefix').text();
     this.name = path.split('/').slice(-2).join('/');
+    this.title = this.name.split('-').slice(0,-1).join('-').trim();
+    if( this.title.match(/^The\s/i) ) {
+      this.title = this.title.replace(/^The\s/i,'')+', The';
+    }
     this.href = location.pathname+'?path='+path;
 
     this.toRow = function(){
@@ -98,6 +102,8 @@ $(function($) {
         direction = $elem.attr('data-dir'),
         field = $elem.attr('data-field');
     fileList.files = fileList.files.sortBy(field, direction);
+    fileList.dirs = (field === 'title') ? fileList.dirs.sortBy(field, direction)
+                                        : fileList.dirs.sortBy('title', 'desc');
     fileList.render();
     $('.sortable').removeClass('active'); $elem.addClass('active');
     $elem.attr('data-dir', direction === 'asc' ? 'desc' : 'asc');
