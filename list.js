@@ -41,6 +41,7 @@ $(function($) {
       if (!this.name||FILE_EXCLUDES.indexOf(key)>-1){return;}
       return [
         '<tr>',
+          '<td><span class="icon-android-book"></span></td>',
           '<td><a href="/', key, '">', this.name, '</a></td>',
           '<td>', this.date.toLocaleString(), '</td>',
           '<td>', this.size.toBytes(), '</td>',
@@ -61,6 +62,7 @@ $(function($) {
     this.toRow = function(){
       return [
         '<tr>',
+          '<td><span class="icon-android-folder"></span></td>',
           '<td><a href="', this.href, '">', this.name, '</a></td>',
           '<td></td><td>-</td>',
         '</tr>'
@@ -74,7 +76,7 @@ $(function($) {
 
     this.toRow = function(){
       return [
-        '<tr><td colspan=3>',
+        '<tr><td></td><td colspan=3>',
           '<a href="?path=', this.path, '">../</a>',
         '</td></tr>'
       ].join('');
