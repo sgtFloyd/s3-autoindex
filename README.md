@@ -2,67 +2,34 @@ Create nice directory listings for s3 buckets using only javascript and HTML.
 
 The listing can be deployed on any site and can also be deployed into a bucket.
 
-Inspiration from http://aws.amazon.com/code/Amazon-S3/1713
-
 ## Live Demo
 
 If you want to see an example of this script in action check out:
 
-<http://data.openspending.org/>
+<http://sgtfloyd.com/s3-books>
 
 ## Usage
 
-Copy these 3 lines into the HTML file where you want the listing to show up:
+Clone the respository and edit [index.html file][index], configuring it with your bucket.
 
-    <div id="listing"></div>
-
-    <!-- add jquery - if you already have it just ignore this line -->
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
-
-    <!-- the JS to the do the listing -->
-    <script src="http://rgrp.github.io/s3-bucket-listing/list.js"></script>
-
-We've provided an example [index.html file][index] you can just copy if you want.
-
-[index]: https://github.com/rgrp/s3-bucket-listing/blob/gh-pages/index.html
+[index]: https://github.com/sgtFloyd/s3-books/blob/gh-pages/index.html#L41
 
 ### Tips for S3 buckets
 
-* You probably want to put this in an index.html in the root of your s3 bucket
-* You may want to turn on website mode for your s3 bucket.
-* **Note** for s3 buckets in website mode you must explicitly configure the
-  bucket url - see below for details and explanation of why this is necessary.
-
-### Tips for normal websites
-
-* Copy the code into whatever file you want to act as your listing page.
-* You will need to set the bucket to list - see below
-* You probably want to turn off URL-based navigation.
-
-### Turning off URL based navigation
-
-By default the scripts attempts to use the URL path (/xyz/abc/) to do directory
-style navigation. You may not want this (e.g. if deploying to a website page).
-
-To disable set the following javascript variable:
-
-    S3BL_IGNORE_PATH = true;
+* Put index.html and js/list.min.js in the root of your s3 bucket
+* Turn on website mode for your S3 bucket.
+* **Note** You must explicitly configure the bucket url -
+  see below for details and explanation of why this is necessary.
 
 ### Configuring the Bucket to List
 
-By default, the script will attempt to guess the bucket based on the url you
-are trying to access. However, you can configure it to point at any s3 bucket
-by setting the `BUCKET_URL` javascript variable, e.g.:
+Set the `window.BUCKET_URL` javascript variable, e.g.:
 
-    var BUCKET_URL = 'http://data.openspending.org.s3-eu-west-1.amazonaws.com';
+    window.S3_BUCKET_URL='http://s3-books.s3.amazonaws.com/';
 
-### S3 Website buckets
+### S3 Buckets
 
-For S3 buckets configured in website mode the standard approach will not work
-because a GET request on the bucket root returns the site index page rather
-than the object listing in JSON form.
-
-Thus, you have to set the `BUCKET_URL` variable to be the S3 bucket endpoint
+You have to set the `window.BUCKET_URL` variable to be the S3 bucket endpoint
 which *differs* from the website S3 bucket endpoint. For more details see:
 
 <http://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteEndpoints.html#WebsiteRestEndpointDiff>
@@ -72,12 +39,7 @@ A specific example for the EU west region:
 * Website endpoint: http://example-bucket.s3-website-eu-west-1.amazonaws.com/
 * S3 bucket endpoint (for RESTful calls): http://example-bucket.s3-eu-west-1.amazonaws.com/
 
-Note that US east region is **different** in that the S3 bucket endpoint does not include a location spec but the website version does:
-
-* Website endpoint: http://example-bucket.s3-website-us-east-1.amazonaws.com/
-* S3 bucket endpoint (for RESTful calls): http://example-bucket.s3.amazonaws.com/
-
-#### S3 Website bucket permissions
+#### S3 Bucket Permissions
 
 You must setup the S3 website bucket to allow public read access. 
 
