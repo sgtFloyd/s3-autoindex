@@ -16,10 +16,9 @@ Clone the respository and edit [index.html file][index], configuring it with you
 
 ### Tips for S3 buckets
 
-* Put index.html and js/list.min.js in the root of your s3 bucket
+* Clone the respository to the root of your S3 bucket
 * Turn on website mode for your S3 bucket.
-* **Note** You must explicitly configure the bucket url -
-  see below for details and explanation of why this is necessary.
+* Configure the Bucket URL, *see below*.
 
 ### Configuring the Bucket to List
 
