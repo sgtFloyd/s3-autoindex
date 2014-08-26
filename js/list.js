@@ -1,4 +1,7 @@
 $(function($) {
+  // Ensure trailing slash on bucket url
+  window.S3_BUCKET_URL = window.S3_BUCKET_URL.replace(/\/$/, '') + '/';
+
   var s3RestUrl = (function(){
     var url = window.S3_BUCKET_URL + '?delimiter=/',
         pathRegex = /.*[?&]path=([^&]+)(&.*)?$/,
@@ -29,6 +32,7 @@ $(function($) {
   function File(path, item){
     var key = item.find('Key').text();
     this.name = key.substring(path.length);
+    this.href = window.S3_BUCKET_URL + key;
     this.title = this.name.split('-').slice(0,-1).join('-').trim();
     if( this.title.match(/^The\s/i) ) {
       this.title = this.title.replace(/^The\s/i,'')+', The';
@@ -41,7 +45,7 @@ $(function($) {
       return [
         '<tr>',
           '<td><span class="ion-document-text"></span></td>',
-          '<td><a href="/', key, '">', this.name, '</a></td>',
+          '<td><a href="', this.href, '">', this.name, '</a></td>',
           '<td>', this.date.toLocaleString(), '</td>',
           '<td>', this.size.toBytes(), '</td>',
         '</tr>'
