@@ -114,16 +114,22 @@ $(function($) {
     return url;
   };
 
-  var loadS3Bucket = function(bucketUrl) {
+  var loadS3Bucket = function(bucketUrl, key) {
+    if (key) bucketUrl = decrypt(window.SECRET_BUCKET_URL, key);
     var url = bucketUrl.replace(/\/$/, '') + '/';
     $.get( buildRestUrl(url) )
       .done(function(xml){
+        if (key) writeCookie(key);
         $('#loading').hide();
         fileList = new FileList(xml, url);
         $('.sortable.active').click();
       })
       .fail(function(err){
-        alert('There was an error');
+        if (key) {
+          alert('Incorrect Password');
+          writeCookie("", -1); // Erase Cookie
+          init(); // Reset page
+        } else alert('There was an error');
         console.error(err);
       });
   };
@@ -137,20 +143,28 @@ $(function($) {
     return CryptoJS.AES.encrypt(url, key).toString();
   };
 
-  $('#login').submit(function(e){
-    var key = $(this).find('input').val(),
-        url = decrypt(window.SECRET_BUCKET_URL, key);
-    $('#login').hide();
-    $('#loading').show();
-    loadS3Bucket(url);
+  var readCookie = function(){};
+  var writeCookie = function(value, expiration){};
+
+  $('#login').on('submit', function(e){
+    var key = $(this).find('input').val();
+    $('#login').hide(); $('#loading').show();
+    loadS3Bucket(window.SECRET_BUCKET_URL, key);
     return false; // preventDefault submit
   });
 
-  if (window.SECRET_BUCKET_URL) {
-    $('#loading').hide();
-    $('#login').show();
-  } else {
-    loadS3Bucket(window.S3_BUCKET_URL);
-  }
+  var init = function() {
+    if (window.SECRET_BUCKET_URL) {
+      var preAuth = readCookie();
+      if ( preAuth ) {
+        loadS3Bucket(window.SECRET_BUCKET_URL, preAuth);
+      } else {
+        $('#loading').hide();
+        $('#login').show();
+      }
+    } else {
+      loadS3Bucket(window.S3_BUCKET_URL);
+    }
+  }; init();
 
 });
