@@ -1,18 +1,4 @@
 $(function($) {
-  // Ensure trailing slash on bucket url
-  window.S3_BUCKET_URL = window.S3_BUCKET_URL.replace(/\/$/, '') + '/';
-
-  var s3RestUrl = (function(){
-    var url = window.S3_BUCKET_URL + '?delimiter=/',
-        pathRegex = /.*[?&]path=([^&]+)(&.*)?$/,
-        match = location.search.match(pathRegex);
-    if (match) {
-      var path = match[1].replace(/\/$/, '') + '/';
-      url += '&prefix=' + path;
-    }
-    return url;
-  }());
-
   Number.prototype.toBytes = function(){
     if (this === 0){ return '0 bytes'; }
     var i = parseInt(Math.floor(Math.log(this) / Math.log(1024))),
@@ -29,10 +15,10 @@ $(function($) {
   }
 
   var FILE_EXCLUDES = ['.htpasswd', 'index.html', 'robots.txt', 'favicon.ico'];
-  function File(path, item){
+  function File(path, item, baseUrl){
     var key = item.find('Key').text();
     this.name = key.substring(path.length);
-    this.href = window.S3_BUCKET_URL + key;
+    this.href = baseUrl + key;
     this.title = this.name.split('-').slice(0,-1).join('-').trim();
     if( this.title.match(/^The\s/i) ) {
       this.title = this.title.replace(/^The\s/i,'')+', The';
@@ -89,10 +75,10 @@ $(function($) {
     }
   }
 
-  function FileList(xml) {
+  function FileList(xml, baseUrl) {
     var xml = $(xml), path = $(xml.find('Prefix')[0]).text();
     this.files = $.map(xml.find('Contents'),
-          function(item){return new File(path, $(item));}),
+          function(item){return new File(path, $(item), baseUrl);}),
     this.dirs = $.map(xml.find('CommonPrefixes'),
           function(item){return new Directory($(item));});
 
@@ -117,14 +103,54 @@ $(function($) {
     $elem.attr('data-dir', direction === 'asc' ? 'desc' : 'asc');
   });
 
-  $.get(s3RestUrl)
-    .done(function(xml){
-      $('#loading').hide();
-      fileList = new FileList(xml);
-      $('.sortable.active').click();
-    })
-    .fail(function(err){
-      alert('There was an error');
-      console.error(err);
-    });
+  var buildRestUrl = function(bucketUrl) {
+    var url = bucketUrl + '?delimiter=/',
+        pathRegex = /.*[?&]path=([^&]+)(&.*)?$/,
+        match = location.search.match(pathRegex);
+    if (match) {
+      var path = match[1].replace(/\/$/, '') + '/';
+      url += '&prefix=' + path;
+    }
+    return url;
+  };
+
+  var loadS3Bucket = function(bucketUrl) {
+    var url = bucketUrl.replace(/\/$/, '') + '/';
+    $.get( buildRestUrl(url) )
+      .done(function(xml){
+        $('#loading').hide();
+        fileList = new FileList(xml, url);
+        $('.sortable.active').click();
+      })
+      .fail(function(err){
+        alert('There was an error');
+        console.error(err);
+      });
+  };
+
+  var decrypt = function(url, key) {
+    var decrypted = CryptoJS.AES.decrypt(url, key);
+    return decrypted.toString(CryptoJS.enc.Utf8);
+  };
+
+  var encrypt = function(url, key) {
+    return CryptoJS.AES.encrypt(url, key).toString();
+  };
+
+  $('#login').submit(function(e){
+    var key = $(this).find('input').val(),
+        url = decrypt(window.SECRET_BUCKET_URL, key);
+    $('#login').hide();
+    $('#loading').show();
+    loadS3Bucket(url);
+    return false; // preventDefault submit
+  });
+
+  if (window.SECRET_BUCKET_URL) {
+    $('#loading').hide();
+    $('#login').show();
+  } else {
+    loadS3Bucket(window.S3_BUCKET_URL);
+  }
+
 });
