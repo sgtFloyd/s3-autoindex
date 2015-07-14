@@ -18,7 +18,7 @@ $(function($) {
   function File(path, item, baseUrl){
     var key = item.find('Key').text();
     this.name = key.substring(path.length);
-    this.href = baseUrl + key;
+    this.href = baseUrl + escape(key);
     this.title = this.name.split('-').slice(0,-1).join('-').trim();
     if( this.title.match(/^The\s/i) ) {
       this.title = this.title.replace(/^The\s/i,'')+', The';
@@ -47,7 +47,7 @@ $(function($) {
     if( this.title.match(/^The\s/i) ) {
       this.title = this.title.replace(/^The\s/i,'')+', The';
     }
-    this.href = location.pathname+'?path='+path;
+    this.href = location.pathname+'?path='+escape(path);
 
     this.toRow = function(){
       if (!this.name||DIRECTORY_EXCLUDES.indexOf(this.name)>-1){return;}
@@ -62,8 +62,9 @@ $(function($) {
   }
 
   function ParentDirectory(parentPath){
-    this.path = parentPath.replace(/\/$/, '')
-      .split('/').slice(0, -1).concat('').join('/');
+    this.path = escape(
+      parentPath.replace(/\/$/, '').split('/').slice(0, -1).concat('').join('/')
+    );
 
     this.toRow = function(){
       return [
