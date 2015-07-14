@@ -119,32 +119,32 @@ $(function($) {
     var url = bucketUrl.replace(/\/$/, '') + '/';
     $.get( buildRestUrl(url) )
       .done(function(xml){
-        if (key) writeCookie(key);
-        $('#loading').hide();
-        fileList = new FileList(xml, url);
+        // Persist successful decryption key with no expiration
+        if (key) document.cookie = 'decryptKey='+key+'; path=/'
+        $('#loading').hide(); fileList = new FileList(xml, url);
         $('.sortable.active').click();
       })
       .fail(function(err){
-        if (key) {
-          alert('Incorrect Password');
-          writeCookie("", -1); // Erase Cookie
-          init(); // Reset page
+        if (key) { // Expire unsuccessful decryption key
+          document.cookie = 'decryptKey=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/'
+          alert('Incorrect Password'); init(); // Reset page
         } else alert('There was an error');
         console.error(err);
       });
   };
 
   var decrypt = function(url, key) {
-    var decrypted = CryptoJS.AES.decrypt(url, key);
-    return decrypted.toString(CryptoJS.enc.Utf8);
+    try {
+      var decrypted = CryptoJS.AES.decrypt(url, key);
+      return decrypted.toString(CryptoJS.enc.Utf8);
+    } catch(err){ return ""; }
   };
 
+  /* Encryption method used to manually generate SECRET_BUCKET_URL
   var encrypt = function(url, key) {
     return CryptoJS.AES.encrypt(url, key).toString();
   };
-
-  var readCookie = function(){};
-  var writeCookie = function(value, expiration){};
+  */
 
   $('#login').on('submit', function(e){
     var key = $(this).find('input').val();
@@ -155,16 +155,14 @@ $(function($) {
 
   var init = function() {
     if (window.SECRET_BUCKET_URL) {
-      var preAuth = readCookie();
-      if ( preAuth ) {
-        loadS3Bucket(window.SECRET_BUCKET_URL, preAuth);
-      } else {
+      // Check document.cookie for any existing decrpytion key.
+      var preAuth = (document.cookie.match('(^|; )decryptKey=([^;]*)')||0)[2];
+      if (preAuth) loadS3Bucket(window.SECRET_BUCKET_URL, preAuth);
+      else {
         $('#loading').hide();
-        $('#login').show();
+        $('#login').show().find('input').focus();
       }
-    } else {
-      loadS3Bucket(window.S3_BUCKET_URL);
-    }
+    } else loadS3Bucket(window.S3_BUCKET_URL);
   }; init();
 
 });
