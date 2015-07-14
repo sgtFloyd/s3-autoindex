@@ -198,6 +198,13 @@ $(function($) {
         failure: function(err){ alert('Something went wrong.'); console.error(err); }
       });
     }
-  }; init();
+  };
+
+  var _loops = 0,
+  initAfterConfig = function() {
+    _loops++; if(_loops>25) return init();
+    if (window.S3_CONFIG_LOADED) init();
+    else setTimeout(initAfterConfig, 25);
+  }; initAfterConfig();
 
 });

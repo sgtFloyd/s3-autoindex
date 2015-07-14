@@ -35,9 +35,14 @@
     <tbody></tbody>
   </table>
 
+  <script type="text/javascript">
+    var script = document.createElement("script"),
+        src = 'config/'+(document.location.host||'books')+'.js';
+    script.type = "text/javascript"; script.src = src;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  </script>
   <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
   <script src="http://crypto-js.googlecode.com/svn/tags/3.1.2/build/rollups/aes.js"></script>
-  <script>window.S3_BUCKET_URL='http://s3-books.s3.amazonaws.com/';</script>
   <script src="js/list.min.js"></script>
 </body>
 </html>
