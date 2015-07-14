@@ -90,6 +90,30 @@ $(function($) {
     }
   }
 
+  var KeyStore = {
+    setCookie: function(value) {
+      document.cookie = 'decryptKey=' + value + '; path=/';
+    },
+
+    readCookie: function() {
+      var decryptKey = 'decryptKey=';
+      var cookies = document.cookie.split(';');
+      for(var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i];
+        while (cookie.charAt(0) == ' ')
+          cookie = cookie.substring(1, cookie.length);
+        if (cookie.indexOf(decryptKey) == 0)
+          return cookie.substring(decryptKey.length, cookie.length);
+      }
+      return null;
+    },
+
+    eraseCookie: function() {
+      var expiration = 'expires=' + new Date(0).toUTCString();
+      document.cookie = 'decryptKey=;' + expiration +'; path=/';
+    }
+  };
+
   var fileList;
   $('.sortable').click(function(e){
     var $elem = $(this),
@@ -114,30 +138,25 @@ $(function($) {
     return url;
   };
 
-  var loadS3Bucket = function(bucketUrl, key) {
-    if (key) bucketUrl = decrypt(window.SECRET_BUCKET_URL, key);
-    var url = bucketUrl.replace(/\/$/, '') + '/';
-    $.get( buildRestUrl(url) )
-      .done(function(xml){
-        // Persist successful decryption key with no expiration
-        if (key) document.cookie = 'decryptKey='+key+'; path=/'
-        $('#loading').hide(); fileList = new FileList(xml, url);
-        $('.sortable.active').click();
-      })
-      .fail(function(err){
-        if (key) { // Expire unsuccessful decryption key
-          document.cookie = 'decryptKey=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/'
-          alert('Incorrect Password'); init(); // Reset page
-        } else alert('There was an error');
-        console.error(err);
-      });
+  var loadS3Bucket = function(url, callbacks) {
+    if (url)
+      $.get( buildRestUrl(url) )
+        .done(callbacks.success)
+        .fail(callbacks.failure);
+    else callbacks.failure();
   };
 
   var decrypt = function(url, key) {
     try {
       var decrypted = CryptoJS.AES.decrypt(url, key);
       return decrypted.toString(CryptoJS.enc.Utf8);
-    } catch(err){ return ""; }
+    } catch(err){}
+  };
+
+  var loadFileList = function(xml, baseUrl) {
+    $('#loading, #login').hide();
+    fileList = new FileList(xml, baseUrl);
+    $('.sortable.active').click();
   };
 
   /* Encryption method used to manually generate SECRET_BUCKET_URL
@@ -147,22 +166,37 @@ $(function($) {
   */
 
   $('#login').on('submit', function(e){
-    var key = $(this).find('input').val();
+    var key = $(this).find('input').val(),
+        url = decrypt(window.SECRET_BUCKET_URL, key);
     $('#login').hide(); $('#loading').show();
-    loadS3Bucket(window.SECRET_BUCKET_URL, key);
+    loadS3Bucket(url, {
+      success: function(xml){ KeyStore.setCookie(key); loadFileList(xml, url); },
+      failure: function(err){ alert('Incorrect Password'); init(); }
+    });
     return false; // preventDefault submit
   });
 
   var init = function() {
     if (window.SECRET_BUCKET_URL) {
-      // Check document.cookie for any existing decrpytion key.
-      var preAuth = (document.cookie.match('(^|; )decryptKey=([^;]*)')||0)[2];
-      if (preAuth) loadS3Bucket(window.SECRET_BUCKET_URL, preAuth);
-      else {
+      if ( KeyStore.readCookie() ) {
+        // Encrypted SECRET_BUCKET_URL, with existing decryption key
+        var url = decrypt(window.SECRET_BUCKET_URL, KeyStore.readCookie());
+        loadS3Bucket(url, {
+          success: function(xml){ loadFileList(xml, url); },
+          failure: function(err){ KeyStore.eraseCookie(); init(); }
+        });
+      } else {
+        // Encrypted SECRET_BUCKET_URL, no decryption key
         $('#loading').hide();
         $('#login').show().find('input').focus();
       }
-    } else loadS3Bucket(window.S3_BUCKET_URL);
+    } else {
+      // S3_BUCKET_URL, no decryption key needed
+      loadS3Bucket(window.S3_BUCKET_URL, {
+        success: function(xml){ loadFileList(xml, window.S3_BUCKET_URL); },
+        failure: function(err){ alert('Something went wrong.'); console.error(err); }
+      });
+    }
   }; init();
 
 });
