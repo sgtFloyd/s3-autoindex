@@ -19,9 +19,9 @@ $(function($) {
     var key = item.find('Key').text();
     this.name = key.substring(path.length);
     this.href = baseUrl + escape(key);
-    this.title = this.name.split('-').slice(0,-1).join('-').trim();
+    this.title = this.name.trim();
     if( this.title.match(/^The\s/i) ) {
-      this.title = this.title.replace(/^The\s/i,'')+', The';
+      this.title = this.title.replace(/^The\s/i,'');
     }
     this.date = new Date(item.find('LastModified').text());
     this.size = parseInt(item.find('Size').text());
@@ -43,9 +43,9 @@ $(function($) {
   function Directory(item) {
     var path = item.find('Prefix').text();
     this.name = path.split('/').slice(-2).join('/');
-    this.title = this.name.split('-').slice(0,-1).join('-').trim();
+    this.title = this.name.trim();
     if( this.title.match(/^The\s/i) ) {
-      this.title = this.title.replace(/^The\s/i,'')+', The';
+      this.title = this.title.replace(/^The\s/i,'');
     }
     this.href = location.pathname+'?path='+escape(path);
 
