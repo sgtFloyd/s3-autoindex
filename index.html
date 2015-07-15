@@ -35,6 +35,15 @@
     <tbody></tbody>
   </table>
 
+  <script type="text/template" id="rowTemplate">
+    <tr>
+      <td><span class="{{icon}}"></span></td>
+      <td nowrap><a href="{{href}}">{{name}}</a></td>
+      <td nowrap>{{date}}</td>
+      <td nowrap>{{size}}</td>
+    </tr>
+  </script>
+
   <script type="text/javascript">
     var script = document.createElement("script"),
         src = 'config/'+(document.location.host||'config')+'.js';

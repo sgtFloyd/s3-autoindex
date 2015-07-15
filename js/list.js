@@ -1,25 +1,44 @@
 $(function($) {
   function File(path, item, baseUrl){
-    var key = item.find('Key').text();
-    this.name = key.substring(path.length);
-    this.href = baseUrl + escape(key);
-    this.title = this.name.trim();
-    if( this.title.match(/^The\s/i) ) {
-      this.title = this.title.replace(/^The\s/i,'');
-    }
-    this.date = new Date(item.find('LastModified').text());
-    this.size = parseInt(item.find('Size').text());
+    var key = item.find('Key').text(),
+        name = key.substring(path.length);
+
+    var props = {
+      name: name,
+      title: name.replace(/^The\s*/i,''),
+      href: baseUrl + escape(key),
+      date: new Date(item.find('LastModified').text()).toLocaleString(),
+      size: parseInt(item.find('Size').text()).toBytes()
+    };
+// props = {
+//   name: 'NAME',
+//   href: 'HREF',
+//   title: 'TITLE',
+//   date: 'DATE',
+//   size: 'SIZE'
+// }
+//
+// var template = document.getElementById('rowTemplate').text,
+//     handlebars = template.match(/{{\w+}}/g);
+//
+// handlebars.forEach(function(var){})
+// $.each(props, function(key, val){})
+//
+// var template = document.getElementById('rowTemplate').text,
+//     props = {name: 'NAME',href: 'HREF',title: 'TITLE',date: 'DATE',size: 'SIZE'};
+//
+//
+// var render = function(template, props) {
+//   var pattern = /{{(\w+)}}/, match;
+//   while ( match = pattern.exec(template) )
+//     template = template.replace(match[0], props[match[1]]||"" );
+//   return template;
+// }
+
 
     this.toRow = function(){
-      if(!this.name){return;}
-      return [
-        '<tr>',
-          '<td><span class="ion-document-text"></span></td>',
-          '<td nowrap><a href="', this.href, '">', this.name, '</a></td>',
-          '<td nowrap>', this.date.toLocaleString(), '</td>',
-          '<td nowrap>', this.size.toBytes(), '</td>',
-        '</tr>'
-      ].join('');
+      if(!name){ return; }
+      return render(template, props)
     }
   }
 
@@ -68,7 +87,7 @@ $(function($) {
 
     this.render = function(){
       var output = $('#items tbody'); output.html('').parent().show();
-      if(path){output.append(new ParentDirectory(path).toRow());}
+      if(path) output.append(new ParentDirectory(path).toRow());
       $.each(this.dirs, function(_,dir){output.append(dir.toRow());});
       $.each(this.files, function(_,file){output.append(file.toRow());});
     }
@@ -106,17 +125,17 @@ $(function($) {
     else callbacks.failure();
   };
 
+  var loadFileList = function(xml, baseUrl) {
+    $('#loading, #login').hide();
+    fileList = new FileList(xml, baseUrl);
+    $('.sortable.active').click();
+  };
+
   var decrypt = function(url, key) {
     try {
       var decrypted = CryptoJS.AES.decrypt(url, key);
       return decrypted.toString(CryptoJS.enc.Utf8);
     } catch(err){}
-  };
-
-  var loadFileList = function(xml, baseUrl) {
-    $('#loading, #login').hide();
-    fileList = new FileList(xml, baseUrl);
-    $('.sortable.active').click();
   };
 
   /* Encryption method used to manually generate SECRET_BUCKET_URL
