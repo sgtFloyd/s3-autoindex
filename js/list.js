@@ -1,20 +1,4 @@
 $(function($) {
-  Number.prototype.toBytes = function(){
-    if (this === 0){ return '0 bytes'; }
-    var i = parseInt(Math.floor(Math.log(this) / Math.log(1024))),
-        r = Math.round(this / Math.pow(1024, i)*10)/10;
-    return [r, ['bytes', 'KB', 'MB', 'GB', 'TB'][i]].join(' ');
-  }
-  Array.prototype.sortBy = function(field, direction) {
-    var asc = direction === 'asc';
-    return this.sort(function(a, b){
-      if(a[field] < b[field]) return asc ? 1 : -1;
-      if(a[field] > b[field]) return asc ? -1 : 1;
-      return 0;
-    });
-  }
-
-  var FILE_EXCLUDES = ['.htpasswd', 'index.html', 'robots.txt', 'favicon.ico'];
   function File(path, item, baseUrl){
     var key = item.find('Key').text();
     this.name = key.substring(path.length);
@@ -27,7 +11,7 @@ $(function($) {
     this.size = parseInt(item.find('Size').text());
 
     this.toRow = function(){
-      if (!this.name||FILE_EXCLUDES.indexOf(key)>-1){return;}
+      if(!this.name){return;}
       return [
         '<tr>',
           '<td><span class="ion-document-text"></span></td>',
@@ -39,7 +23,6 @@ $(function($) {
     }
   }
 
-  var DIRECTORY_EXCLUDES = ['fonts/', 'js/'];
   function Directory(item) {
     var path = item.find('Prefix').text();
     this.name = path.split('/').slice(-2).join('/');
@@ -50,7 +33,7 @@ $(function($) {
     this.href = location.pathname+'?path='+escape(path);
 
     this.toRow = function(){
-      if (!this.name||DIRECTORY_EXCLUDES.indexOf(this.name)>-1){return;}
+      if(!this.name){return;}
       return [
         '<tr>',
           '<td nowrap><span class="ion-ios7-folder"></span></td>',
@@ -90,30 +73,6 @@ $(function($) {
       $.each(this.files, function(_,file){output.append(file.toRow());});
     }
   }
-
-  var KeyStore = {
-    setCookie: function(value) {
-      document.cookie = 'decryptKey=' + value + '; path=/';
-    },
-
-    readCookie: function() {
-      var decryptKey = 'decryptKey=';
-      var cookies = document.cookie.split(';');
-      for(var i = 0; i < cookies.length; i++) {
-        var cookie = cookies[i];
-        while (cookie.charAt(0) == ' ')
-          cookie = cookie.substring(1, cookie.length);
-        if (cookie.indexOf(decryptKey) == 0)
-          return cookie.substring(decryptKey.length, cookie.length);
-      }
-      return null;
-    },
-
-    eraseCookie: function() {
-      var expiration = 'expires=' + new Date(0).toUTCString();
-      document.cookie = 'decryptKey=;' + expiration +'; path=/';
-    }
-  };
 
   var fileList;
   $('.sortable').click(function(e){
