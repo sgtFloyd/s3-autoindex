@@ -31,9 +31,9 @@ $(function($) {
       return [
         '<tr>',
           '<td><span class="ion-document-text"></span></td>',
-          '<td><a href="', this.href, '">', this.name, '</a></td>',
-          '<td>', this.date.toLocaleString(), '</td>',
-          '<td>', this.size.toBytes(), '</td>',
+          '<td nowrap><a href="', this.href, '">', this.name, '</a></td>',
+          '<td nowrap>', this.date.toLocaleString(), '</td>',
+          '<td nowrap>', this.size.toBytes(), '</td>',
         '</tr>'
       ].join('');
     }
@@ -53,9 +53,9 @@ $(function($) {
       if (!this.name||DIRECTORY_EXCLUDES.indexOf(this.name)>-1){return;}
       return [
         '<tr>',
-          '<td><span class="ion-ios7-folder"></span></td>',
-          '<td><a href="', this.href, '">', this.name, '</a></td>',
-          '<td></td><td>-</td>',
+          '<td nowrap><span class="ion-ios7-folder"></span></td>',
+          '<td nowrap><a href="', this.href, '">', this.name, '</a></td>',
+          '<td nowrap></td><td>-</td>',
         '</tr>'
       ].join('');
     }
