@@ -1,18 +1,25 @@
-var buildS3Url = function(bucketUrl) {
+var buildS3Url = function(bucketUrl, marker) {
   var url = bucketUrl + '?delimiter=/',
-      pathRegex = /.*[?&]path=([^&]+)(&.*)?$/,
-      match = location.search.match(pathRegex);
-  if (match) {
-    var path = match[1].replace(/\/$/, '') + '/';
-    url += '&prefix=' + path;
-  }
+      path = location.search.match(/.*[?&]path=([^&]+)(&.*)?$/);
+  if (path) url += '&prefix=' + path[1].replace(/\/$/,'') + '/';
+  if (marker) url += '&marker=' + marker;
   return url;
 };
 
-var loadS3Bucket = function(url, callbacks) {
+var loadS3Bucket = function(url, callbacks, total) {
+  $('#loading').append('.');
+  if (total)
+    var contents = $(total).find('Contents, CommonPrefixes'),
+        marker = contents.last().find('Key, Prefix').text();
+
   if (url)
-    $.get( buildS3Url(url) )
-      .done(callbacks.success)
-      .fail(callbacks.failure);
+    $.get( buildS3Url(url, marker) )
+      .done(function(xml) {
+        var isTruncated = $(xml).find('IsTruncated').text();
+        // Combine the results with any previous pages
+        xml = $(xml).find('ListBucketResult').prepend(contents);
+        isTruncated === 'false' ? callbacks.success(xml)
+                                : loadS3Bucket(url, callbacks, xml);
+      }).fail(callbacks.failure);
   else callbacks.failure();
 };
