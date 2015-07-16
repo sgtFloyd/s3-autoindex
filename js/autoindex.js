@@ -1,15 +1,14 @@
 $(function($) {
-  var fileList,
-  buildFileList = function(xml, baseUrl) {
+  var showFileList = function(rootUrl) {
+    FileList.root = rootUrl;
     $('#loading, #login').hide();
-    fileList = new FileList(xml, baseUrl);
     $('.sortable.active').click();
   };
 
   $('.sortable').click(function(e){
     var $elem = $(this), dir = $elem.attr('data-dir');
-    fileList.sortBy( $elem.attr('data-field'), dir );
-    fileList.render( $('#items tbody') );
+    FileList.sortBy( $elem.attr('data-field'), dir );
+    FileList.render( $('#items tbody') );
 
     // Update headers to with the current sort options
     $('.sortable').removeClass('active'); $elem.addClass('active');
@@ -21,7 +20,7 @@ $(function($) {
         url = decrypt(window.SECRET_BUCKET_URL, key);
     $('#login').hide(); $('#loading').show();
     loadS3Bucket(url, {
-      success: function(xml){ KeyStore.setCookie(key); buildFileList(xml, url); },
+      success: function(){ KeyStore.setCookie(key); showFileList(url); },
       failure: function(err){ alert('Incorrect Password'); init(); }
     });
     return false; // preventDefault submit
@@ -33,7 +32,7 @@ $(function($) {
         // Encrypted SECRET_BUCKET_URL, with existing decryption key
         var url = decrypt(window.SECRET_BUCKET_URL, KeyStore.readCookie());
         loadS3Bucket(url, {
-          success: function(xml){ buildFileList(xml, url); },
+          success: function(){ showFileList(url); },
           failure: function(err){ KeyStore.eraseCookie(); init(); }
         });
       } else {
@@ -44,7 +43,7 @@ $(function($) {
     } else {
       // S3_BUCKET_URL, no decryption key needed
       loadS3Bucket(window.S3_BUCKET_URL, {
-        success: function(xml){ buildFileList(xml, window.S3_BUCKET_URL); },
+        success: function(){ showFileList(window.S3_BUCKET_URL); },
         failure: function(err){ alert('Something went wrong.'); console.error(err); }
       });
     }

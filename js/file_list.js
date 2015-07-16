@@ -1,46 +1,46 @@
-function FileList(xml, baseUrl) {
-  var $xml = $(xml),
-      path = $($xml.find('Prefix')[0]).text(),
+var FileList = {
+  dirs: [], files: [],
 
-  dirs = $.map($xml.find('CommonPrefixes'), function(item){
-    return new Directory( $(item) );
-  }).sortBy('title', 'desc'),
-
-  files = $.map($xml.find('Contents'), function(item){
-    return new File( path, $(item), baseUrl );
-  }),
-
-  template = $('#rowTemplate').text(),
-  renderRow = function(attrs) {
-    var output = template, match;
+  renderRow: function(attrs) {
+    var output = this.template, match;
     while (match = /{{(\w+)}}/.exec(output))
       output = output.replace(match[0], attrs[match[1]] || "");
     return output;
-  };
+  },
 
-  this.sortBy = function(field, direction) {
-    files = files.sortBy(field, direction);
-  }
+  sortBy: function(field, direction) {
+    this.files = this.files.sortBy(field, direction);
+    this.dirs = this.dirs.sortBy('title', 'desc');
+  },
 
-  this.render = function($target) {
+  render: function($target) {
     var items = [];
-    if (path) items.push( new ParentDirectory(path) );
-    items = items.concat(dirs, files);
+    if (this.prefix)
+      items.push( new ParentDirectory(this.prefix) );
+
+    this.dirs.forEach(function(dir){
+      items.push( new Directory($(dir)) );
+    });
+    this.files.forEach(function(file){
+      items.push(new File(this.prefix, $(file), this.root))
+    }, this);
+
+    this.template = $('#rowTemplate').text();
     $target.html('').parent().show(); // Clear any existing content
     items.forEach(function(row) {
-      if (row.name) $target.append(renderRow(row));
-    });
+      if (row.name) $target.append(this.renderRow(row));
+    }, this);
   }
 }
 
-function File(path, item, baseUrl){
+function File(path, item, bucketUrl){
   var file = item.find('Key').text(),
       name = file.substring(path.length);
   return {
     icon: 'ion-document-text',
     name: name,
     title: name.replace(/^The\s*/i,''),
-    href: baseUrl + escape(file),
+    href: bucketUrl + escape(file),
     date: new Date(item.find('LastModified').text()).toLocaleString(),
     size: parseInt(item.find('Size').text()).toBytes()
   };

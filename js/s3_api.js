@@ -6,20 +6,23 @@ var buildS3Url = function(bucketUrl, marker) {
   return url;
 };
 
-var loadS3Bucket = function(url, callbacks, total) {
+var loadS3Bucket = function(url, callbacks, marker) {
   $('#loading').append('.');
-  if (total)
-    var contents = $(total).find('Contents, CommonPrefixes'),
-        marker = contents.last().find('Key, Prefix').text();
-
   if (url)
     $.get( buildS3Url(url, marker) )
       .done(function(xml) {
-        var isTruncated = $(xml).find('IsTruncated').text();
-        // Combine the results with any previous pages
-        xml = $(xml).find('ListBucketResult').prepend(contents);
-        isTruncated === 'false' ? callbacks.success(xml)
-                                : loadS3Bucket(url, callbacks, xml);
+        var $xml = $(xml), isTruncated = $xml.find('IsTruncated').text();
+        $.merge(FileList.dirs, $xml.find('CommonPrefixes'));
+        $.merge(FileList.files, $xml.find('Contents'));
+
+        if (isTruncated === 'false') {
+          FileList.prefix = $xml.find('Prefix:first').text();
+          callbacks.success();
+        } else {
+          var marker = $xml.find('ListBucketResult')
+            .children(':last').find('Key, Prefix').text();
+          loadS3Bucket(url, callbacks, marker); // Load the next page
+        }
       }).fail(callbacks.failure);
   else callbacks.failure();
 };
