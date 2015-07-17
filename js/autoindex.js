@@ -1,6 +1,5 @@
 $(function($) {
-  var showFileList = function(rootUrl) {
-    FileList.root = rootUrl;
+  var showFileList = function() {
     $('#loading, #login').hide();
     $('.sortable.active').click();
   };
@@ -19,6 +18,7 @@ $(function($) {
     var key = $(this).find('input').val(),
         url = decrypt(window.SECRET_BUCKET_URL, key);
     $('#login').hide(); $('#loading').show();
+    FileList.root = url;
     loadS3Bucket(url, {
       success: function(){ KeyStore.setCookie(key); showFileList(url); },
       failure: function(err){ alert('Incorrect Password'); init(); }
@@ -31,8 +31,9 @@ $(function($) {
       if ( KeyStore.readCookie() ) {
         // Encrypted SECRET_BUCKET_URL, with existing decryption key
         var url = decrypt(window.SECRET_BUCKET_URL, KeyStore.readCookie());
+        FileList.root = url;
         loadS3Bucket(url, {
-          success: function(){ showFileList(url); },
+          success: function(){ showFileList(); },
           failure: function(err){ KeyStore.eraseCookie(); init(); }
         });
       } else {
@@ -42,8 +43,9 @@ $(function($) {
       }
     } else {
       // S3_BUCKET_URL, no decryption key needed
+      FileList.root = window.S3_BUCKET_URL;
       loadS3Bucket(window.S3_BUCKET_URL, {
-        success: function(){ showFileList(window.S3_BUCKET_URL); },
+        success: function(){ showFileList(); },
         failure: function(err){ alert('Something went wrong.'); console.error(err); }
       });
     }

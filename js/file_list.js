@@ -1,6 +1,17 @@
 var FileList = {
   dirs: [], files: [],
 
+  processXML: function($xml) {
+    var self = this;
+    self.prefix = $xml.find('Prefix:first').text();
+    $xml.find('CommonPrefixes').each(function(_, node){
+      self.dirs.push( new Directory($(node)) );
+    });
+    $xml.find('Contents').each(function(_, node){
+      self.files.push( new File(self.prefix, $(node), self.root) );
+    });
+  },
+
   renderRow: function(attrs) {
     var output = this.template, match;
     while (match = /{{(\w+)}}/.exec(output))
@@ -14,35 +25,32 @@ var FileList = {
   },
 
   render: function($target) {
-    var items = [];
-    if (this.prefix)
-      items.push( new ParentDirectory(this.prefix) );
-
-    this.dirs.forEach(function(dir){
-      items.push( new Directory($(dir)) );
-    });
-    this.files.forEach(function(file){
-      items.push(new File(this.prefix, $(file), this.root))
-    }, this);
-
     this.template = $('#rowTemplate').text();
     $target.html('').parent().show(); // Clear any existing content
-    items.forEach(function(row) {
-      if (row.name) $target.append(this.renderRow(row));
+
+    if (this.prefix)
+      $target.append( this.renderRow(new ParentDirectory(this.prefix)) );
+    this.dirs.forEach(function(dir) {
+      if (dir.name) $target.append(this.renderRow(dir));
+    }, this);
+    this.files.forEach(function(file) {
+      if (file.name) $target.append(this.renderRow(file));
     }, this);
   }
 }
 
 function File(path, item, bucketUrl){
   var file = item.find('Key').text(),
-      name = file.substring(path.length);
+      name = file.substring(path.length),
+      size = parseInt(item.find('Size').text());
   return {
     icon: 'ion-document-text',
     name: name,
     title: name.replace(/^The\s*/i,''),
     href: bucketUrl + escape(file),
     date: new Date(item.find('LastModified').text()).toLocaleString(),
-    size: parseInt(item.find('Size').text()).toBytes()
+    size: size,
+    sizeStr: size.toBytes()
   };
 }
 
@@ -54,7 +62,7 @@ function Directory(item) {
     name: name,
     title: name.replace(/^The\s*/i,''),
     href: location.pathname+'?path='+escape(path),
-    size: '-'
+    sizeStr: '-'
   };
 }
 

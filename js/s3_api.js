@@ -11,14 +11,12 @@ var loadS3Bucket = function(url, callbacks, marker) {
   if (url)
     $.get( buildS3Url(url, marker) )
       .done(function(xml) {
-        var $xml = $(xml), isTruncated = $xml.find('IsTruncated').text();
-        $.merge(FileList.dirs, $xml.find('CommonPrefixes'));
-        $.merge(FileList.files, $xml.find('Contents'));
+        var $xml = $(xml);
+        FileList.processXML($xml);
 
-        if (isTruncated === 'false') {
-          FileList.prefix = $xml.find('Prefix:first').text();
-          callbacks.success();
-        } else {
+        var isTruncated = $xml.find('IsTruncated').text();
+        if (isTruncated === 'false') callbacks.success();
+        else {
           var marker = $xml.find('ListBucketResult')
             .children(':last').find('Key, Prefix').text();
           loadS3Bucket(url, callbacks, marker); // Load the next page
