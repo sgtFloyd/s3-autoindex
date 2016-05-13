@@ -40,14 +40,14 @@ var FileList = {
 }
 
 function File(path, item, bucketUrl){
-  var file = item.find('Key').text(),
+  var file = item.find('Key').text().replace(/\/$/,''),
       name = file.substring(path.length),
       size = parseInt(item.find('Size').text());
   return {
     icon: 'ion-document-text',
     name: name,
     title: name.replace(/^The\s*/i,''),
-    href: bucketUrl + escape(file),
+    href: bucketUrl + encodeURIComponent(file),
     date: new Date(item.find('LastModified').text()).toLocaleString(),
     size: size,
     sizeStr: size.toBytes()
@@ -55,13 +55,13 @@ function File(path, item, bucketUrl){
 }
 
 function Directory(item) {
-  var path = item.find('Prefix').text(),
+  var path = item.find('Prefix').text().replace(/\/$/,''),
       name = path.split('/').slice(-2).join('/');
   return {
     icon: 'ion-ios7-folder',
     name: name,
     title: name.replace(/^The\s*/i,''),
-    href: location.pathname+'?path='+escape(path),
+    href: location.pathname+'?path='+encodeURIComponent(path),
     sizeStr: '-'
   };
 }
@@ -72,6 +72,6 @@ function ParentDirectory(parentPath){
   return {
     icon: 'ion-arrow-return-left',
     name: '../',
-    href: location.pathname+'?path='+escape(path),
+    href: location.pathname+'?path='+encodeURIComponent(path),
   };
 }
