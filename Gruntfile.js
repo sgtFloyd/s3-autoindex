@@ -1,5 +1,7 @@
 module.exports = function(grunt) {
   var srcFiles = [
+    'js/vendor/jquery.js',
+    'js/vendor/crypto-js.js',
     'js/core_ext.js',
     'js/encryption.js',
     'js/file_list.js',
