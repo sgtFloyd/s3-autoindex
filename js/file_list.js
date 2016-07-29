@@ -47,7 +47,7 @@ function File(path, item, bucketUrl){
     icon: 'ion-document-text',
     name: name,
     title: name.replace(/^The\s*/i,''),
-    href: bucketUrl + encodeURIComponent(file),
+    href: bucketUrl + encodeURIComponent(file).replace(/%2F/g, '/'),
     date: new Date(item.find('LastModified').text()).toLocaleString(),
     size: size,
     sizeStr: size.toBytes()
