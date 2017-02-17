@@ -1,0 +1,16 @@
+{
+  "name": "s3-autoindex",
+  "version": "1.0.0",
+  "description": "Static website to generate directory listing for S3 buckets.",
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-uglify": "^2.1.0",
+    "grunt-contrib-watch": "^1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sgtFloyd/s3-autoindex.git"
+  }
+}

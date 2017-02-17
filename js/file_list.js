@@ -68,7 +68,7 @@ function Directory(item) {
 
 function ParentDirectory(parentPath){
   var path = parentPath.replace(/\/$/, '')
-    .split('/').slice(0, -1).concat('').join('/');
+    .split('/').slice(0, -1).join('/');
   return {
     icon: 'ion-arrow-return-left',
     name: '../',
