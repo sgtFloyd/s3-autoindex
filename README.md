@@ -1,5 +1,4 @@
 # s3-autoindex
----
 
 Static website to generate directory listing for S3 buckets.
 
