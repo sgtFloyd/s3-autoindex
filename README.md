@@ -7,7 +7,7 @@ Static website to generate directory listing for S3 buckets.
 ## Usage
 Clone the repository and edit [config.js](https://github.com/sgtFloyd/s3-autoindex/blob/master/config/config.js), configuring it with your bucket.
 - Set `window.S3_BUCKET_URL` to bucket's REST endpoint.
-- Alternatively, set `window.SECRET_BUCKET_URL` to your AES-encrypted REST endpoint for a password-protected directory listing. You'll need to enter your encryption key before the page will load.
+- Alternatively, set `window.SECRET_BUCKET_URL` to your AES-encrypted REST endpoint. Doing so will obfuscate your public S3 url and password protect your directory listing. An `encrypt` function is available in [js/encryption.js](https://github.com/sgtFloyd/s3-autoindex/blob/master/js/encryption.js) for generating encrypted URLs.
 
 **Note:** The S3 REST endpoint used differs from S3's website endpoint. For more details, see: [Website Rest EndpointDiff](http://docs.aws.amazon.com/AmazonS3/latest/dev/WebsiteEndpoints.html#WebsiteRestEndpointDiff).
 
