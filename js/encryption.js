@@ -7,6 +7,6 @@ var decrypt = function (url, key) { // eslint-disable-line no-unused-vars
 }
 
 // Encryption method used to manually generate SECRET_BUCKET_URL
-// var encrypt = function (url, key) {
-//   return CryptoJS.AES.encrypt(url, key).toString()
-// }
+var encrypt = function (url, key) {
+  return CryptoJS.AES.encrypt(url, key).toString()
+}
